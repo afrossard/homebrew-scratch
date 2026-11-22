@@ -109,7 +109,7 @@ jobs:
       - name: Merge with brew bottle and show the bottle blocks it writes
         working-directory: bottles
         run: |
-          brew bottle --merge --write --no-commit --root-url=https://ghcr.io/v2/afrossard/scratch *.json
+          brew bottle --merge --write --no-commit --root-url=https://ghcr.io/v2/afrossard/scratch ./*.json
           git -C "$(brew --repository "$GITHUB_REPOSITORY")" diff -- Formula
 
       - name: Compare tarball contents across platforms
