@@ -1,0 +1,129 @@
+# Based on the tests.yml that `brew tap-new` generates (Homebrew 7.0.12),
+# extended to answer one question: do builds of these formulas on different
+# platforms come out identical, so `brew bottle --merge` writes an `all:` tag?
+name: brew test-bot
+
+on:
+  pull_request:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+jobs:
+  test-bot:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-26, macos-15-intel]
+        tab: [default, json]
+        include:
+          - os: ubuntu-latest
+            tab: default
+            container:
+              image: ghcr.io/homebrew/brew:main
+              options: --privileged
+          - os: ubuntu-latest
+            tab: json
+            container:
+              image: ghcr.io/homebrew/brew:main
+              options: --privileged
+          - os: ubuntu-24.04-arm
+            tab: default
+            container:
+              image: ghcr.io/homebrew/brew:main
+              options: --privileged
+          - os: ubuntu-24.04-arm
+            tab: json
+            container:
+              image: ghcr.io/homebrew/brew:main
+              options: --privileged
+    runs-on: ${{ matrix.os }}
+    container: ${{ fromJSON(toJSON(matrix.container)) }}
+    permissions:
+      actions: read
+      checks: read
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@ceec4e8419bb3c97ce96e9dda7738499ed5f869d # 2026.11.14.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: brew test-bot --only-cleanup-before
+
+      - run: brew test-bot --only-setup
+
+      - run: brew test-bot --only-tap-syntax
+
+      - env:
+          TAB: ${{ matrix.tab }}
+        run: |
+          extra=()
+          if [ "$TAB" = json ]; then extra+=(--only-json-tab); fi
+          brew test-bot --only-formulae --root-url=https://ghcr.io/v2/afrossard/scratch "${extra[@]}"
+
+      - name: Upload bottles as artifact
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bottles_${{ matrix.os }}_${{ matrix.tab }}
+          path: '*.bottle.*'
+
+  merge:
+    needs: test-bot
+    if: always()
+    strategy:
+      fail-fast: false
+      matrix:
+        tab: [default, json]
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/homebrew/brew:main
+    permissions:
+      contents: read
+    steps:
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@ceec4e8419bb3c97ce96e9dda7738499ed5f869d # 2026.11.14.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: bottles_*_${{ matrix.tab }}
+          path: bottles
+          merge-multiple: true
+
+      - name: Show each platform's tag, cellar and sha256
+        working-directory: bottles
+        run: |
+          ls -l
+          for j in *.json; do
+            jq -r 'to_entries[] | .key as $f | .value.bottle.tags | to_entries[] | "\($f) \(.key) cellar=\(.value.cellar) sha256=\(.value.sha256)"' "$j"
+          done | sort
+
+      - name: Merge with brew bottle and show the bottle blocks it writes
+        working-directory: bottles
+        run: |
+          brew bottle --merge --write --no-commit --root-url=https://ghcr.io/v2/afrossard/scratch *.json
+          git -C "$(brew --repository "$GITHUB_REPOSITORY")" diff -- Formula
+
+      - name: Compare tarball contents across platforms
+        if: always()
+        working-directory: bottles
+        run: |
+          for f in agent-runtime actual-budget-transformer; do
+            first=""
+            for t in "$f"--*.bottle.tar.gz; do
+              d="x/${t%.bottle.tar.gz}"
+              mkdir -p "$d"
+              tar -xzf "$t" -C "$d"
+              if [ -z "$first" ]; then first="$d"; continue; fi
+              echo "=== $first vs $d"
+              diff -r "$first" "$d" || true
+            done
+          done
