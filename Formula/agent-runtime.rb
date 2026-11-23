@@ -8,9 +8,8 @@ class AgentRuntime < Formula
 
   bottle do
     root_url "https://ghcr.io/v2/afrossard/scratch"
-    rebuild 1
-    manifest_sha256 "4f403679daec0353ba32880c1a0fff3c48e491dcf80dd76a0d14cf5a7f7ca727"
-    sha256 cellar: :any_skip_relocation, all: "45ad14ed4025d40957abf28911fa2cf6e5d05dd820af6dfcdb05115231ad8245"
+    manifest_sha256 "a01ddeb2a94323150f4c3730d49ca6de015f4c03927b9d87e2186077be208ed4"
+    sha256 cellar: :any_skip_relocation, all: "b0bf0586d675c70497044a04267a4d69d89bc2eac95bf8c33ed57bde1b5bfbb6"
   end
 
   def install
