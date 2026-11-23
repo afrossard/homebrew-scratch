@@ -6,6 +6,13 @@ class ActualBudgetTransformer < Formula
   sha256 "612d0f4a9e4ab1e2e0670556c7a022dd1f9711b5be8e8fdb420fbe4d247719ee"
   license "Unlicense"
 
+  bottle do
+    root_url "https://ghcr.io/v2/afrossard/scratch"
+    rebuild 2
+    manifest_sha256 "abd2835980cc8c450197ebec352b694fc93ca8bcbf8ed325e98d4981c0cfefa2"
+    sha256 cellar: :any_skip_relocation, all: "9d56b4cd49189c85374a7b43e75988f2406726d4023c39d46c822c79633ec3fa"
+  end
+
   def install
     bin.install "scripts/abt-import"
   end
