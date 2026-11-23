@@ -8,9 +8,9 @@ class ActualBudgetTransformer < Formula
 
   bottle do
     root_url "https://ghcr.io/v2/afrossard/scratch"
-    rebuild 1
-    manifest_sha256 "e7f9f6247880ec0a03dba1ead9b9a4ee8f684ac5c9a9f565fa2d6759f06594d2"
-    sha256 cellar: :any_skip_relocation, all: "3be738b9d26bf4befad634be9a0c5549e6ebfff7736ea36926ee708b59bff21f"
+    rebuild 2
+    manifest_sha256 "abd2835980cc8c450197ebec352b694fc93ca8bcbf8ed325e98d4981c0cfefa2"
+    sha256 cellar: :any_skip_relocation, all: "9d56b4cd49189c85374a7b43e75988f2406726d4023c39d46c822c79633ec3fa"
   end
 
   def install
