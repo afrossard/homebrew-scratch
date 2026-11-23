@@ -1,3 +1,4 @@
+# Scratch copy of the formula in afrossard/homebrew-tap.
 class ActualBudgetTransformer < Formula
   desc "Launcher for the bank statement import CLI (afrossard/actual-budget-transformer)"
   homepage "https://github.com/afrossard/actual-budget-transformer"

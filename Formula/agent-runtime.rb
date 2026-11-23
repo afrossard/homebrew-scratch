@@ -1,3 +1,4 @@
+# Scratch copy of the formula in afrossard/homebrew-tap.
 class AgentRuntime < Formula
   desc "Launcher and cleanup script for the agent runtime (afrossard/container-base)"
   homepage "https://github.com/afrossard/container-base"
