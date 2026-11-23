@@ -1,0 +1,42 @@
+# Installs from this tap the way a user would, with the runner's own
+# preinstalled Homebrew and no setup action, and fails unless brew pours the
+# published bottle instead of building from source.
+name: User install
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+jobs:
+  install:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-26, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Put the runner's Homebrew on PATH
+        run: |
+          for prefix in /home/linuxbrew/.linuxbrew /opt/homebrew /usr/local; do
+            if [ -x "$prefix/bin/brew" ]; then echo "$prefix/bin" >> "$GITHUB_PATH"; exit 0; fi
+          done
+          echo "::error::No preinstalled Homebrew found."
+          exit 1
+
+      - name: Install both formulas and require a poured bottle
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+        run: |
+          brew tap afrossard/scratch
+          for f in agent-runtime actual-budget-transformer; do
+            brew install "afrossard/scratch/$f" 2>&1 | tee "install-$f.log"
+            grep -q "Pouring $f--" "install-$f.log"
+          done
+          launch-agent-runtime --help
+          cleanup-agent-sessions --help
+          brew info --json=v2 afrossard/scratch/agent-runtime | jq -r '.formulae[0].installed[0] | "poured_from_bottle=\(.poured_from_bottle) version=\(.version)"'
