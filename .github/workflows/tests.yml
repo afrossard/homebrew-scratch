@@ -18,14 +18,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-26]
-        include:
-          - os: ubuntu-latest
-            container:
-              image: ghcr.io/homebrew/brew:main
-              options: --privileged
+        # Linux only: these formulas' bottles are identical on every platform,
+        # and two builds are enough for `brew bottle --merge` to write `all:`.
+        os: [ubuntu-latest, ubuntu-24.04-arm]
     runs-on: ${{ matrix.os }}
-    container: ${{ fromJSON(toJSON(matrix.container)) }}
+    container:
+      image: ghcr.io/homebrew/brew:main
+      options: --privileged
     permissions:
       actions: read
       checks: read
