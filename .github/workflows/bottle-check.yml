@@ -1,0 +1,31 @@
+# Kept apart from tests.yml, because it is red by design until publish.yml
+# has run, and publish.yml waits for tests.yml as a whole to succeed.
+name: Published bottle
+
+on:
+  pull_request:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+jobs:
+  published-bottle:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Homebrew
+        id: homebrew
+        uses: Homebrew/actions/setup-homebrew@ceec4e8419bb3c97ce96e9dda7738499ed5f869d # 2026.11.14.1
+
+      - name: Fail unless every formula's published bottle matches its sha256
+        env:
+          TAP_NAME: ${{ steps.homebrew.outputs.tap-name }}
+        run: .github/scripts/verify-published-bottles.sh "$TAP_NAME"
