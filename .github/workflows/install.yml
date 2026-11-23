@@ -29,9 +29,11 @@ jobs:
           exit 1
 
       - name: Install both formulas and require a poured bottle
-        env:
-          HOMEBREW_NO_AUTO_UPDATE: "1"
+        # No HOMEBREW_NO_AUTO_UPDATE: like a user's `brew install`, this
+        # updates Homebrew first. Formulas bottled by Homebrew 7.0.14 or later
+        # carry `manifest_sha256`, which older versions cannot load.
         run: |
+          brew --version
           brew tap afrossard/scratch
           for f in agent-runtime actual-budget-transformer; do
             brew install "afrossard/scratch/$f" 2>&1 | tee "install-$f.log"
