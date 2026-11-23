@@ -147,11 +147,12 @@ jobs:
           permission-contents: write
 
       # Taps this checkout in place; do not `brew tap` it again (AGENTS.md).
+      # No `token` input: setup-homebrew would store it as a global git
+      # extraheader, and the push below would then go out as GITHUB_TOKEN
+      # instead of the App.
       - name: Set up Homebrew
         id: homebrew
         uses: Homebrew/actions/setup-homebrew@ceec4e8419bb3c97ce96e9dda7738499ed5f869d # 2026.11.14.1
-        with:
-          token: ${{ github.token }}
 
       - name: Check out the pull request's head commit
         working-directory: ${{ steps.homebrew.outputs.repository-path }}
