@@ -169,9 +169,27 @@ jobs:
           # A plain push, never forced: it fails if the branch moved meanwhile.
           git push "https://x-access-token:${APP_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$BRANCH"
 
-      - name: Squash-merge once checks pass on the bottle commit
+      - name: Wait until GitHub sees the bottle commit as the pull request's head
         if: steps.current.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
           NEW_SHA: ${{ steps.pr-upload.outputs.head_sha }}
-        run: gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --auto --squash --match-head-commit "$NEW_SHA"
+        run: |
+          # As in homebrew-core: merging is refused until the push has
+          # registered as the PR's head.
+          for delay in 1 2 4 8 16 32 64; do
+            if [ "$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq .headRefOid)" = "$NEW_SHA" ]; then
+              exit 0
+            fi
+            sleep "$delay"
+          done
+          echo "::error::PR #$PR's head never became $NEW_SHA."
+          exit 1
+
+      # Also runs when the bottles were already published, so dispatching a
+      # published PR again still merges it.
+      - name: Squash-merge once checks pass on the head commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ steps.pr-upload.outputs.head_sha || env.EXPECTED_SHA }}
+        run: gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --auto --squash --match-head-commit "$HEAD_SHA"
