@@ -6,6 +6,13 @@ class AgentRuntime < Formula
   sha256 "9ab9392e9f404c098247af7927db304f3ca5db7aae7cddc53353f21bcc312ed4"
   license "Unlicense"
 
+  bottle do
+    root_url "https://ghcr.io/v2/afrossard/scratch"
+    rebuild 1
+    manifest_sha256 "bd6b7b799bf50f26f0692d97c7b3c4c5bc90d494436ad88d9d9478a3201e305e"
+    sha256 cellar: :any_skip_relocation, all: "b31888ecd61e26d2e3d324fb1feff46342306da2a70da5b23a41e56fbbc3fd9f"
+  end
+
   def install
     libexec.install "scripts/launch-agent-runtime"
     libexec.install "scripts/cleanup-agent-sessions"
